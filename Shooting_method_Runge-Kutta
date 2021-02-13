@@ -1,0 +1,123 @@
+#Problem 4.12
+
+
+''' Apply the shooting method to solve the eigenvalue problem
+    u"(x)=lambda u(x)
+    u(0)=u(1)=0
+    '''
+
+import numpy
+import matplotlib.pyplot as plt
+import math
+
+
+
+
+
+
+#Lets predict u'(0) then apply Runge Kutte method to check
+def runge_kutta_4_second_order(F,x,y,p,x_final,h=0.01):
+    p_data=[p]
+    y_data=[y]
+    x_data=[x]
+
+    while x<x_final:
+        j1=h*F(x,y,p)
+        k1=h*p
+
+        j2=h*F(x+h/2,y+k1/2,p+j1/2)
+        k2=h*(p+j1/2)
+
+        j3=h*F(x+h/2,y+k2/2,p+j2/2)
+        k3=h*(p+j2/2)
+
+        j4=h*F(x+h,y+k3,p+j3)
+        k4=h*(p+j3)
+
+        p=p+(1/6)*(j1+2*j2+2*j3+j4)
+        p_data.append(p)
+        y=y+(1/6)*(k1+2*k2+2*k3+k4)
+        y_data.append(y)
+        x=x+h
+        x_data.append(x)
+
+    return x_data,y_data,p_data
+def eulers_method(F,x,y,p,x_final,h=1):
+    p_data = [p]
+    y_data = [y]
+    x_data = [x]
+    while x < x_final:
+        new_y=y+p*h
+        new_p=p+F(x,y,p)*h
+        x=x+h
+        y=new_y
+        p=new_p
+
+        y_data.append(y)
+        p_data.append(p)
+        x_data.append(x)
+        print(x, y, p)
+
+    return x_data,y_data,p_data
+
+def F(x,y,p):
+    Lambda = -4* math.pi ** 2
+    return Lambda*y
+
+def u(x):
+    C=1
+    return C*math.sin(2*math.pi*x)
+
+#first preditced p value
+p1=math.pi
+x_1,y_1,p_1=runge_kutta_4_second_order(F,0,0,p1,1)
+
+#second predicted p value
+p2=4*math.pi
+x_2,y_2,p_2=runge_kutta_4_second_order(F,0,0,p2,1)
+
+print(y_1[len(y_1)-1])
+print(y_2[len(y_2)-1])
+
+
+#Interpolate them
+def y_p(p):
+    return ((p-p1)/(p2-p1))*(y_2[len(y_2)-1])+((p2-p)/(p2-p1))*(y_1[len(y_1)-1])
+
+
+def backward_diff(f,x0,x1):
+    ''' Returns backward differentiation of input function.'''
+    return float(f(x1)-f(x0))/float(x1-x0)
+
+
+def secant_method(x_0,x_1,f,tolerance=0.0000001):
+    ''' Secant method function input: inital boundary points as x_0 and x_1
+        given fucntion and tolerance for stopping iteration'''
+    while abs(f(x_1))>tolerance: # if function approximates to zero or smaller than tolerance then  breake.
+        x_new=x_1-float(f(x_1))/backward_diff(f,x_0,x_1)
+        x_0=x_1
+        x_1=x_new
+    return x_new
+
+print(secant_method(p1,p2,y_p))
+
+''' This part contains the analyitcal solution of corresponded ODE'''
+y_analy=[]
+for i in x_2:
+    y_analy.append(u(i))
+fig, ax = plt.subplots()
+
+#Graphicing by matplotlib.pyplot
+ax.grid(True, which='both')
+ax.axhline(y=0, color='k')
+ax.axvline(x=0, color='k')
+
+plt.xlabel("x domain",fontsize=12)
+plt.ylabel("u(x)",fontsize=12)
+
+plt.plot(x_2,y_2,color='green')
+plt.plot(x_2,y_1,color='blue')
+ax.scatter(x_2,y_analy,color='red') # analytical plot
+
+
+plt.show()
